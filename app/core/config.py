@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     SHOPIFY_STORE_URL: str
     SHOPIFY_ACCESS_TOKEN: str
     SHOPIFY_API_VERSION: str = "2024-01"
-    GEMINI_API_KEY: str
+    GROQ_API_KEY: str
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

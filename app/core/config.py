@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import field_validator
 
@@ -6,6 +8,11 @@ class Settings(BaseSettings):
     SHOPIFY_ACCESS_TOKEN: str
     SHOPIFY_API_VERSION: str = "2024-01"
     GEMINI_API_KEY: str
+    META_VERIFY_TOKEN: str = "CHANGE_ME"
+    WHATSAPP_ACCESS_TOKEN: Optional[str] = None
+    WHATSAPP_PHONE_NUMBER_ID: Optional[str] = None
+    META_GRAPH_API_VERSION: str = "v17.0"
+    SOCIAL_MOCK_MODE: bool = True
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

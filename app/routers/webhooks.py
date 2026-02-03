@@ -1,12 +1,11 @@
 from fastapi import APIRouter, Request, HTTPException, Query, BackgroundTasks
+from app.core.config import settings
 from app.services.ai_service import AIService
 from app.services.social_service import SocialService
 
 router = APIRouter()
 ai_service = AIService()
 social_service = SocialService()
-
-VERIFY_TOKEN = "MODAMASAL_SECRET_TOKEN" # Configure this in Meta Portal
 
 @router.get("/webhooks/whatsapp")
 async def verify_webhook(
@@ -17,7 +16,7 @@ async def verify_webhook(
     """
     Meta Verification Request
     """
-    if mode == "subscribe" and token == VERIFY_TOKEN:
+    if mode == "subscribe" and token == settings.META_VERIFY_TOKEN:
         return int(challenge)
     raise HTTPException(status_code=403, detail="Invalid verify token")
 

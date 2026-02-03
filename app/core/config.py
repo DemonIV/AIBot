@@ -5,7 +5,12 @@ class Settings(BaseSettings):
     SHOPIFY_STORE_URL: str
     SHOPIFY_ACCESS_TOKEN: str
     SHOPIFY_API_VERSION: str = "2024-01"
-    GROQ_API_KEY: str
+    GEMINI_API_KEY: str
+    
+    # Meta (WhatsApp/Instagram) Config
+    META_ACCESS_TOKEN: str = "placeholder_token"
+    META_PHONE_ID: str = "placeholder_id"
+    META_VERIFY_TOKEN: str = "MODAMASAL_SECRET_TOKEN"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

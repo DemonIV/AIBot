@@ -4,6 +4,7 @@ from sqlalchemy.orm import declarative_base
 
 # Check for DATABASE_URL (Cloud) or use local SQLite
 DATABASE_URL = os.getenv("DATABASE_URL")
+print(f"DEBUGGING STARTUP: Raw DATABASE_URL found: {bool(DATABASE_URL)}")
 
 if DATABASE_URL:
     if DATABASE_URL.startswith("postgres://"):
@@ -14,8 +15,15 @@ if DATABASE_URL:
 if not DATABASE_URL:
     # Fallback to local SQLite
     DATABASE_URL = "sqlite+aiosqlite:///./modamasal.db"
+    print("DEBUGGING STARTUP: Using Local SQLite")
 
-engine = create_async_engine(DATABASE_URL, echo=True)
+print(f"DEBUGGING STARTUP: Final URL Scheme: {DATABASE_URL.split('://')[0]}")
+
+try:
+    engine = create_async_engine(DATABASE_URL, echo=True)
+except Exception as e:
+    print(f"CRITICAL DB ENGINE ERROR: {e}")
+    raise e
 SessionLocal = async_sessionmaker(autocommit=False, autoflush=False, bind=engine, class_=AsyncSession)
 
 Base = declarative_base()

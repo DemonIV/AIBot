@@ -24,12 +24,10 @@ class SocialService:
         
         async with httpx.AsyncClient() as client:
             try:
-                # Uncomment to actually send when configured
-                # response = await client.post(url, headers=headers, json=payload)
-                # response.raise_for_status()
-                # return response.json()
-                print(f"[MOCK SOCIAL] Sending WhatsApp to {to_number}: {text}")
-                return {"status": "mock_sent"}
+                # Actual sending logic
+                response = await client.post(url, headers=headers, json=payload)
+                response.raise_for_status()
+                return response.json()
             except Exception as e:
                 print(f"Error sending WhatsApp: {e}")
                 return None

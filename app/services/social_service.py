@@ -3,7 +3,7 @@ from app.core.config import settings
 
 class SocialService:
     def __init__(self):
-    def __init__(self):
+    
         self.wa_token = settings.META_ACCESS_TOKEN
         self.phone_number_id = settings.META_PHONE_ID
 

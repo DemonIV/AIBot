@@ -4,6 +4,8 @@ from sqlalchemy.orm import declarative_base
 
 # Check for DATABASE_URL (Cloud) or use local SQLite
 DATABASE_URL = os.getenv("DATABASE_URL")
+if DATABASE_URL:
+    DATABASE_URL = DATABASE_URL.strip()
 print(f"DEBUGGING STARTUP: Raw DATABASE_URL found: {bool(DATABASE_URL)}")
 
 if DATABASE_URL:

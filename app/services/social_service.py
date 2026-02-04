@@ -27,6 +27,7 @@ class SocialService:
                 # Actual sending logic
                 response = await client.post(url, headers=headers, json=payload)
                 response.raise_for_status()
+                print(f"DEBUG: WhatsApp Message SENT successfully to {to_number}. Status: {response.status_code}")
                 return response.json()
             except Exception as e:
                 print(f"Error sending WhatsApp: {e}")

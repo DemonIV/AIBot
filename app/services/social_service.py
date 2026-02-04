@@ -3,9 +3,9 @@ from app.core.config import settings
 
 class SocialService:
     def __init__(self):
-        # You normally need different tokens for WA and IG, but simplifying for now or assuming settings
-        self.wa_token = settings.SHOPIFY_ACCESS_TOKEN # PLACEHOLDER - Need Real Token
-        self.phone_number_id = "YOUR_PHONE_NUMBER_ID" # PLACEHOLDER
+    def __init__(self):
+        self.wa_token = settings.META_ACCESS_TOKEN
+        self.phone_number_id = settings.META_PHONE_ID
 
     async def send_whatsapp_message(self, to_number: str, text: str):
         """

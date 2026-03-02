@@ -69,7 +69,61 @@ async def handle_whatsapp_message(sender_id: str, message: str):
     await social_service.send_whatsapp_message(sender_id, ai_response)
     print("\n")
 
-# Instagram simplified placeholder
+@router.get("/webhooks/instagram")
+async def verify_instagram_webhook(
+    mode: str = Query(alias="hub.mode"),
+    token: str = Query(alias="hub.verify_token"),
+    challenge: str = Query(alias="hub.challenge")
+):
+    """
+    Instagram Webhook Verification
+    """
+    if mode == "subscribe" and token == VERIFY_TOKEN:
+        return int(challenge)
+    raise HTTPException(status_code=403, detail="Invalid verify token")
+
 @router.post("/webhooks/instagram")
-async def instagram_webhook(request: Request):
-    return {"status": "received_mg"}
+async def instagram_webhook(request: Request, background_tasks: BackgroundTasks):
+    """
+    Receive Instagram Direct Messages
+    """
+    data = await request.json()
+    print(f"DEBUG: Instagram Webhook Data: {data}")
+
+    try:
+        # Check if it's an Instagram message
+        entry = data.get("entry", [])[0]
+        messaging_list = entry.get("messaging", [])
+        
+        if messaging_list:
+            msg_obj = messaging_list[0]
+            sender_id = msg_obj.get("sender", {}).get("id")
+            message_data = msg_obj.get("message", {})
+            text_body = message_data.get("text")
+            
+            # Prevent replying to echo/delivery messages
+            if text_body and not message_data.get("is_echo"):
+                background_tasks.add_task(handle_instagram_message, sender_id, text_body)
+
+        return {"status": "received"}
+    except Exception as e:
+        print(f"Error processing IG webhook: {e}")
+        return {"status": "error"}
+
+async def handle_instagram_message(sender_id: str, message: str):
+    print(f"\n[INSTAGRAM-BOT] 1. Gönderen (IG ID): {sender_id} | Mesaj: {message}")
+    print("[INSTAGRAM-BOT] 2. Yapay Zeka düşünmeye başladı...")
+    
+    # 1. Get AI Response
+    try:
+        # Use a distinct session prefix for IG
+        ai_response = await ai_service.generate_response(message, session_id=f"ig_{sender_id}")
+        print(f"[INSTAGRAM-BOT] 3. Yapay Zeka cevabı hazır: {ai_response[:50]}...")
+    except Exception as e:
+        print(f"[INSTAGRAM-BOT] 3. HATA! Yapay Zeka çöktü: {e}")
+        return
+
+    # 2. Send Response back via SocialService
+    print("[INSTAGRAM-BOT] 4. Instagram'a gönderiliyor...")
+    await social_service.send_instagram_message(sender_id, ai_response)
+    print("\n")

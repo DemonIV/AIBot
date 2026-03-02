@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     META_ACCESS_TOKEN: str = "placeholder_token"
     META_PHONE_ID: str = "placeholder_id"
     META_VERIFY_TOKEN: str = "MODAMASAL_SECRET_TOKEN"
+    INSTAGRAM_ACCESS_TOKEN: str = "placeholder_ig_token"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

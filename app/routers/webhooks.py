@@ -53,14 +53,21 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
         return {"status": "error"}
 
 async def handle_whatsapp_message(sender_id: str, message: str):
-    print(f"DEBUG: Background Task Started for {sender_id}. Message: {message}")
-    # 1. Get AI Response
-    # Use sender_id as session_id to maintain history per user
-    ai_response = await ai_service.generate_response(message, session_id=f"wa_{sender_id}")
-    print(f"DEBUG: AI generated response: {ai_response}")
+    print(f"\n[WHATSAPP-BOT] 1. Gönderen: {sender_id} | Mesaj: {message}")
+    print("[WHATSAPP-BOT] 2. Yapay Zeka düşünmeye başladı...")
     
+    # 1. Get AI Response
+    try:
+        ai_response = await ai_service.generate_response(message, session_id=f"wa_{sender_id}")
+        print(f"[WHATSAPP-BOT] 3. Yapay Zeka cevabı hazır: {ai_response[:50]}...")
+    except Exception as e:
+        print(f"[WHATSAPP-BOT] 3. HATA! Yapay Zeka çöktü: {e}")
+        return
+
     # 2. Send Response back via SocialService
+    print("[WHATSAPP-BOT] 4. WhatsApp'a gönderiliyor...")
     await social_service.send_whatsapp_message(sender_id, ai_response)
+    print("\n")
 
 # Instagram simplified placeholder
 @router.post("/webhooks/instagram")

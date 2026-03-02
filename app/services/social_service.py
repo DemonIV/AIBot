@@ -17,7 +17,9 @@ class SocialService:
             "Content-Type": "application/json"
         }
         payload = {
+             
             "messaging_product": "whatsapp",
+            "type": "text",
             "to": to_number,
             "text": {"body": text}
         }
@@ -27,10 +29,14 @@ class SocialService:
                 # Actual sending logic
                 response = await client.post(url, headers=headers, json=payload)
                 response.raise_for_status()
-                print(f"DEBUG: WhatsApp Message SENT successfully to {to_number}. Status: {response.status_code}")
+                print(f"[WHATSAPP-BOT] 5. BAŞARILI! Mesaj iletildi. (Status: {response.status_code})")
                 return response.json()
+            except httpx.HTTPStatusError as e:
+                error_body = e.response.text if e.response is not None else "<no response body>"
+                print(f"[WHATSAPP-BOT] 5. HATA (Yetki/Token): {e.response.status_code} | Detay: {error_body}")
+                return None
             except Exception as e:
-                print(f"Error sending WhatsApp: {e}")
+                print(f"[WHATSAPP-BOT] 5. HATA (Bilinmeyen): {e}")
                 return None
 
     async def send_instagram_message(self, recipient_id: str, text: str):

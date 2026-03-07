@@ -9,6 +9,7 @@ class OrderStatus(str, enum.Enum):
     SENT = "Gönderildi/Kargolandı"
     COMPLETED = "Tamamlandı"
     CANCELLED = "İptal Edildi"
+    RETURNED = "İade Edildi"
 
 class OrderSource(str, enum.Enum):
     WEB = "Web"

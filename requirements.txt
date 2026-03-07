@@ -10,6 +10,7 @@ alembic
 aiosqlite
 asyncpg
 psycopg2-binary
-a2wsgi
+#a2wsgi
 bcrypt
 PyJWT
+python-multipart

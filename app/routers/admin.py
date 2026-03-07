@@ -40,12 +40,20 @@ ADMIN_HTML = """
 </head>
 <body class="bg-gray-100 font-sans text-sm">
     <div id="app" class="container mx-auto p-4">
-        <header class="mb-6 flex justify-between items-center bg-white p-4 rounded shadow">
+        <header class="mb-6 flex flex-col md:flex-row justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100 gap-4">
             <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
                 🛍️ ModaMasal Yönetim Paneli
             </h1>
-            <div class="flex gap-2">
-                <button @click="fetchOrders" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">
+            <div class="flex flex-col md:flex-row gap-4 w-full md:w-auto items-center">
+                <!-- Arama Kutusu -->
+                <div class="relative w-full md:w-96">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-search text-gray-400"></i>
+                    </div>
+                    <input v-model="searchQuery" type="text" class="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-xl leading-5 bg-gray-50 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:border-pink-300 focus:ring-2 focus:ring-pink-100 sm:text-sm transition duration-150 ease-in-out shadow-inner" placeholder="Ara: İsim, Tel, Şehir, Sipariş No, Ürün...">
+                </div>
+
+                <button @click="fetchOrders" class="bg-blue-500 text-white px-4 py-2 rounded-xl hover:bg-blue-600 transition flex-shrink-0 shadow-sm font-medium">
                     <i class="fas fa-sync-alt mr-1"></i> Yenile
                 </button>
             </div>
@@ -64,7 +72,7 @@ ADMIN_HTML = """
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    <tr v-for="order in orders" :key="order.id" class="hover:bg-gray-50 transition">
+                    <tr v-for="order in filteredOrders" :key="order.id" class="hover:bg-gray-50 transition">
                         <!-- Status Badge -->
                         <td class="px-4 py-4 whitespace-nowrap">
                             <span :class="statusClass(order.status)" class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full">
@@ -130,7 +138,7 @@ ADMIN_HTML = """
                             </div>
                         </td>
                     </tr>
-                     <tr v-if="orders.length === 0">
+                     <tr v-if="filteredOrders.length === 0">
                         <td colspan="6" class="text-center py-10 text-gray-500">
                             <i class="fas fa-inbox text-4xl mb-3 block text-gray-300"></i>
                             Henüz sipariş bulunmamaktadır.
@@ -147,7 +155,34 @@ ADMIN_HTML = """
         createApp({
             data() {
                 return {
-                    orders: []
+                    orders: [],
+                    searchQuery: ''
+                }
+            },
+            computed: {
+                filteredOrders() {
+                    if (!this.searchQuery) return this.orders;
+                    
+                    const query = this.searchQuery.toLowerCase().trim();
+                    
+                    return this.orders.filter(order => {
+                        // Create a massive string containing all searchable fields
+                        const searchStr = `
+                            ${order.id} 
+                            ${order.first_name || ''} 
+                            ${order.last_name || ''} 
+                            ${order.phone || ''} 
+                            ${order.email || ''} 
+                            ${order.city || ''} 
+                            ${order.address || ''} 
+                            ${order.product_summary || ''} 
+                            ${order.status || ''}
+                            ${order.payment_method || ''}
+                            ${this.formatDate(order.created_at)}
+                        `.toLowerCase();
+                        
+                        return searchStr.includes(query);
+                    });
                 }
             },
             methods: {
@@ -215,26 +250,40 @@ LOGIN_HTML = """
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Giriş Yap - Moda Masal</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+    </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
-        <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Yönetim Paneli Girişi</h2>
+<body class="bg-gradient-to-br from-pink-50 to-pink-100 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white/80 backdrop-blur-md p-10 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-pink-100 w-full max-w-md transition-all">
         
-        <form action="/api/v1/admin/login" method="POST">
-            <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-bold mb-2" for="username">Kullanıcı Adı</label>
-                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="username" name="username" type="text" required>
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-rose-400 mb-2">Moda Masal 🌸</h1>
+            <h2 class="text-lg text-gray-500 font-medium">Yönetim Paneli</h2>
+        </div>
+        
+        <form action="/api/v1/admin/login" method="POST" class="space-y-6">
+            <div>
+                <label class="block text-gray-700 text-sm font-semibold mb-2" for="username">Kullanıcı Adı</label>
+                <input class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none transition-all text-gray-700 bg-white/50" id="username" name="username" type="text" placeholder="admin" required>
             </div>
-            <div class="mb-6">
-                <label class="block text-gray-700 text-sm font-bold mb-2" for="password">Şifre</label>
-                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" id="password" name="password" type="password" required>
+            
+            <div>
+                <label class="block text-gray-700 text-sm font-semibold mb-2" for="password">Şifre</label>
+                <input class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none transition-all text-gray-700 bg-white/50" id="password" name="password" type="password" placeholder="••••••••" required>
             </div>
-            <div class="flex items-center justify-between">
-                <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full" type="submit">
+            
+            <div class="pt-2">
+                <button class="w-full bg-gradient-to-r from-pink-500 to-rose-400 hover:from-pink-600 hover:to-rose-500 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-pink-200" type="submit">
                     Giriş Yap
                 </button>
             </div>
         </form>
+        
+        <div class="mt-8 text-center text-sm text-gray-400">
+            <p>Admin erişimi yetkilendirilen hesaplarla sınırlıdır.</p>
+        </div>
     </div>
 </body>
 </html>

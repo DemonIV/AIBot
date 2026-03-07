@@ -61,7 +61,6 @@ class Order(Base):
     last_name = Column(String, index=True)
     phone = Column(String, index=True)
     email = Column(String, nullable=True)
-    social_username = Column(String, nullable=True) # IG Username for reference
     
     # Address Info
     address = Column(Text) # Full address
@@ -78,15 +77,3 @@ class Order(Base):
     payment_method = Column(Enum(PaymentMethod), default=PaymentMethod.CREDIT_CARD)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-class InteractionPlatform(str, enum.Enum):
-    WHATSAPP = "WhatsApp"
-    INSTAGRAM = "Instagram"
-
-class CustomerInteraction(Base):
-    __tablename__ = "customer_interactions"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    platform = Column(Enum(InteractionPlatform), nullable=False)
-    user_id = Column(String, index=True, nullable=False) # WA Phone Number or IG Sender ID
-    last_interaction = Column(DateTime, default=datetime.utcnow)

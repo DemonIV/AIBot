@@ -2,11 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Form, Response, 
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import func
 from app.db.database import get_db
 from app.services.order_service import OrderService
 from app.services.auth_service import AuthService
-from app.db.models import Order, OrderStatus, User, CustomerInteraction, InteractionPlatform
+from app.db.models import Order, OrderStatus, User
 from typing import List
 
 router = APIRouter()
@@ -81,12 +80,7 @@ ADMIN_HTML = """
         <!-- TAB 1: DASHBOARD (İSTATİSTİKLER) -->
         <div v-show="currentTab === 'dashboard'" class="space-y-6">
             <!-- Summary Cards -->
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-purple-50">
-                    <div class="text-purple-500 mb-2"><i class="fas fa-users text-2xl"></i></div>
-                    <div class="text-2xl font-bold text-gray-800">{{ adminStats.total_unique_customers }}</div>
-                    <div class="text-sm text-gray-500">Görüşülen Müşteri</div>
-                </div>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-blue-50">
                     <div class="text-blue-500 mb-2"><i class="fas fa-shopping-bag text-2xl"></i></div>
                     <div class="text-2xl font-bold text-gray-800">{{ stats.totalOrders }}</div>
@@ -156,10 +150,7 @@ ADMIN_HTML = """
                             <td class="px-6 py-4 whitespace-nowrap text-gray-500 text-xs">{{ formatDate(order.created_at) }}</td>
                             <td class="px-6 py-4">
                                 <div class="font-medium text-gray-900">{{ order.first_name }} {{ order.last_name }}</div>
-                                <div v-if="order.social_username" class="text-xs text-pink-500 font-bold mt-1 tracking-wide">
-                                    <i class="fab fa-instagram mr-1"></i>@{{ order.social_username }}
-                                </div>
-                                <div class="text-xs text-gray-500 mt-1"><i class="fas fa-phone mr-1"></i>{{ order.phone }}</div>
+                                <div class="text-xs text-gray-500"><i class="fas fa-phone mr-1"></i>{{ order.phone }}</div>
                             </td>
                             <td class="px-6 py-4">
                                 <div class="text-sm text-gray-800 font-medium mb-1">{{ order.product_summary }}</div>
@@ -233,7 +224,6 @@ ADMIN_HTML = """
                 return {
                     currentTab: 'dashboard',
                     orders: [],
-                    adminStats: { total_unique_customers: 0, whatsapp_customers: 0, instagram_customers: 0 },
                     searchQuery: '',
                     returnSearchQuery: '',
                     isLoading: false,
@@ -262,7 +252,7 @@ ADMIN_HTML = """
                     if (!query) return arr;
                     const q = query.toLowerCase().trim();
                     return arr.filter(o => {
-                        const str = `${o.id} ${o.first_name} ${o.last_name} ${o.phone} ${o.city} ${o.product_summary} ${o.social_username || ''}`.toLowerCase();
+                        const str = `${o.id} ${o.first_name} ${o.last_name} ${o.phone} ${o.city} ${o.product_summary}`.toLowerCase();
                         return str.includes(q);
                     });
                 },
@@ -271,10 +261,6 @@ ADMIN_HTML = """
                     try {
                         const response = await axios.get('/api/v1/admin/orders');
                         this.orders = response.data;
-                        
-                        const statsResponse = await axios.get('/api/v1/admin/stats');
-                        this.adminStats = statsResponse.data;
-                        
                         this.$nextTick(() => { this.updateCharts(); }); // Update graphs after DOM
                     } catch (error) {
                         if (error.response && error.response.status === 401) window.location.href = '/api/v1/admin/login';
@@ -467,23 +453,3 @@ async def update_order_status(order_id: int, status: OrderStatus, current_user: 
     if not updated_order:
         raise HTTPException(status_code=404, detail="Order not found")
     return updated_order
-
-@router.get("/stats")
-async def get_stats(current_user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    # Total unique customers
-    total_result = await db.execute(select(func.count(CustomerInteraction.id)))
-    total_customers = total_result.scalar() or 0
-    
-    # WhatsApp
-    wa_result = await db.execute(select(func.count(CustomerInteraction.id)).where(CustomerInteraction.platform == InteractionPlatform.WHATSAPP))
-    wa_customers = wa_result.scalar() or 0
-    
-    # Instagram
-    ig_result = await db.execute(select(func.count(CustomerInteraction.id)).where(CustomerInteraction.platform == InteractionPlatform.INSTAGRAM))
-    ig_customers = ig_result.scalar() or 0
-    
-    return {
-        "total_unique_customers": total_customers,
-        "whatsapp_customers": wa_customers,
-        "instagram_customers": ig_customers
-    }

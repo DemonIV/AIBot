@@ -3,30 +3,12 @@ from app.services.ai_service import AIService
 from app.services.social_service import SocialService
 
 from app.core.config import settings
-from app.db.database import SessionLocal
-from app.db.models import CustomerInteraction, InteractionPlatform
-from sqlalchemy.future import select
-from datetime import datetime
 
 router = APIRouter()
 ai_service = AIService()
 social_service = SocialService()
 
 VERIFY_TOKEN = settings.META_VERIFY_TOKEN
-
-async def log_interaction(platform: InteractionPlatform, sender_id: str):
-    async with SessionLocal() as session:
-        result = await session.execute(select(CustomerInteraction).where(
-            CustomerInteraction.platform == platform,
-            CustomerInteraction.user_id == sender_id
-        ))
-        interaction = result.scalars().first()
-        if interaction:
-            interaction.last_interaction = datetime.utcnow()
-        else:
-            interaction = CustomerInteraction(platform=platform, user_id=sender_id)
-            session.add(interaction)
-        await session.commit()
 
 @router.get("/webhooks/whatsapp")
 async def verify_webhook(
@@ -71,7 +53,6 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
         return {"status": "error"}
 
 async def handle_whatsapp_message(sender_id: str, message: str):
-    await log_interaction(InteractionPlatform.WHATSAPP, sender_id)
     print(f"\n[WHATSAPP-BOT] 1. Gönderen: {sender_id} | Mesaj: {message}")
     print("[WHATSAPP-BOT] 2. Yapay Zeka düşünmeye başladı...")
     
@@ -130,7 +111,6 @@ async def instagram_webhook(request: Request, background_tasks: BackgroundTasks)
         return {"status": "error"}
 
 async def handle_instagram_message(sender_id: str, message: str):
-    await log_interaction(InteractionPlatform.INSTAGRAM, sender_id)
     print(f"\n[INSTAGRAM-BOT] 1. Gönderen (IG ID): {sender_id} | Mesaj: {message}")
     print("[INSTAGRAM-BOT] 2. Yapay Zeka düşünmeye başladı...")
     

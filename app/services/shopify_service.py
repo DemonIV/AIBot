@@ -162,8 +162,7 @@ class ShopifyClient:
         phone: str, 
         product_summary: str,
         payment_method: str = "Kredi Kartı", # "Kredi Kartı" or "Kapıda Ödeme"
-        email: str = None,
-        social_username: str = None
+        email: str = None
     ) -> str:
         """
         Creates a draft order in Shopify with customer details AND saves to local DB. Returns invoice URL or success message.
@@ -235,8 +234,6 @@ class ShopifyClient:
                     city=city,
                     product_summary=product_summary,
                     payment_method=pm_enum,
-                    email=email,
-                    social_username=social_username,
                     shopify_invoice_url=invoice_url
                 )
                 print(f"DEBUG: Order saved to database successfully.")

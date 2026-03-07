@@ -24,8 +24,7 @@ Görevin: Müşterilerin ürün sorularını yanıtlamak ve sipariş oluşturmak
 SİPARİŞ ALMA SÜRECİ (ÇOK ÖNEMLİ):
 Müşteri bir ürünü satın almak istediğinde HEMEN sipariş oluşturma. Sırasıyla şu bilgileri İSTE:
 1. "Tabii siparişinizi oluşturmak için hangi beden ve renk istediğinizi öğrenebilir miyim?" (Eğer zaten söylediyse geç)
-2. "Sipariş teslimatı için İsim, Soyisim, Açık Adres, Şehir ve Telefon Numaranızı rica edebilir miyim? 🌸" 
-   - (Ayrıca müşteriye "Instagram üzerinden ulaşıyorsanız size daha kolay yardımcı olabilmemiz için Instagram kullanıcı adınızı da paylaşır mısınız? 📸" şeklinde opsiyonel olarak Instagram adını sor).
+2. "Sipariş teslimatı için İsim, Soyisim, Açık Adres, Şehir ve Telefon Numaranızı rica edebilir miyim? 🌸" (Mail adresi opsiyonel)
 3. Müşteri bilgileri verince HEPSİNİ özetle ve onayla: "Bilgilerinizi şöyle aldım: ... Doğru mudur efendim?"
 4. Müşteri "Evet" derse ŞUNU SOR: "Ödemenizi Kredi Kartı ile Web Sitemizden mi yoksa Kapıda Ödeme ile mi yapmak istersiniz?"
 5. Müşterinin cevabına göre `create_draft_order` aracını kullan:
@@ -79,8 +78,7 @@ ASLA YAPMA:
                                 "phone": {"type": "string"},
                                 "product_summary": {"type": "string", "description": "Short summary of product name, color, size requested by user."},
                                 "payment_method": {"type": "string", "enum": ["Kredi Kartı", "Kapıda Ödeme"], "description": "Payment method choice."},
-                                "email": {"type": "string"},
-                                "social_username": {"type": "string", "description": "Instagram or social media username of the customer, if provided."}
+                                "email": {"type": "string"}
                             },
                             "required": ["variant_id", "first_name", "last_name", "address1", "city", "phone", "product_summary", "payment_method"]
                         }
@@ -139,7 +137,6 @@ ASLA YAPMA:
                     product_summary = function_args.get("product_summary")
                     email = function_args.get("email")
                     payment_method = function_args.get("payment_method")
-                    social_username = function_args.get("social_username")
 
                     tool_result = await self.shopify_client.create_draft_order(
                         variant_id=variant_id, 
@@ -151,8 +148,7 @@ ASLA YAPMA:
                         phone=phone,
                         product_summary=product_summary,
                         payment_method=payment_method,
-                        email=email,
-                        social_username=social_username
+                        email=email
                     )
                 
                 # Send the tool result back to the model

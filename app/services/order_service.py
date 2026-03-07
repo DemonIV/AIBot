@@ -18,6 +18,7 @@ class OrderService:
         source: OrderSource = OrderSource.WEB,
         payment_method: PaymentMethod = PaymentMethod.CREDIT_CARD,
         email: str = None,
+        social_username: str = None,
         shopify_invoice_url: str = None
     ) -> Order:
         new_order = Order(
@@ -30,6 +31,7 @@ class OrderService:
             source=source,
             payment_method=payment_method,
             email=email,
+            social_username=social_username,
             shopify_invoice_url=shopify_invoice_url,
             status=OrderStatus.PENDING
         )

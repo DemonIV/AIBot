@@ -12,6 +12,10 @@ class Settings(BaseSettings):
     META_PHONE_ID: str = "placeholder_id"
     META_VERIFY_TOKEN: str = "MODAMASAL_SECRET_TOKEN"
     INSTAGRAM_ACCESS_TOKEN: str = "placeholder_ig_token"
+    
+    JWT_SECRET: str = "super_secret_jwt_key_please_change_in_production"
+    JWT_ALGORITHM: str = "HS256"
+    JWT_EXPIRATION_HOURS: int = 24
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

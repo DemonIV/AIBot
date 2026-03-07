@@ -1,5 +1,5 @@
 fastapi
-uvicorn[standard]
+uvicorn
 httpx
 pydantic
 pydantic-settings
@@ -10,3 +10,6 @@ alembic
 aiosqlite
 asyncpg
 psycopg2-binary
+a2wsgi
+bcrypt
+PyJWT

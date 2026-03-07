@@ -1,12 +1,30 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, Depends, HTTPException, Request, Form, Response, status
+from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 from app.db.database import get_db
 from app.services.order_service import OrderService
-from app.db.models import Order, OrderStatus
+from app.services.auth_service import AuthService
+from app.db.models import Order, OrderStatus, User
 from typing import List
 
 router = APIRouter()
+auth_service = AuthService()
+
+# Bağımlılık (Dependency): Oturum Kontrolü
+def get_current_user(request: Request):
+    token = request.cookies.get("access_token")
+    if not token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+    
+    # "Bearer " kısmını at
+    if token.startswith("Bearer "):
+        token = token.split(" ")[1]
+        
+    payload = auth_service.verify_token(token)
+    if not payload:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    return payload
 
 ADMIN_HTML = """
 <!DOCTYPE html>
@@ -138,8 +156,12 @@ ADMIN_HTML = """
                         const response = await axios.get('/api/v1/admin/orders');
                         this.orders = response.data;
                     } catch (error) {
-                        alert('Siparişler çekilemedi!');
-                        console.error(error);
+                        if (error.response && error.response.status === 401) {
+                            window.location.href = '/api/v1/admin/login';
+                        } else {
+                            alert('Siparişler çekilemedi!');
+                            console.error(error);
+                        }
                     }
                 },
                 formatDate(dateString) {
@@ -166,7 +188,11 @@ ADMIN_HTML = """
                         const order = this.orders.find(o => o.id === id);
                         if(order) order.status = newStatus;
                     } catch (error) {
-                        alert('Güncelleme başarısız!');
+                        if (error.response && error.response.status === 401) {
+                            window.location.href = '/api/v1/admin/login';
+                        } else {
+                            alert('Güncelleme başarısız!');
+                        }
                     }
                 }
             },
@@ -181,17 +207,79 @@ ADMIN_HTML = """
 </html>
 """
 
+LOGIN_HTML = """
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giriş Yap - Moda Masal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
+        <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Yönetim Paneli Girişi</h2>
+        
+        <form action="/api/v1/admin/login" method="POST">
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="username">Kullanıcı Adı</label>
+                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="username" name="username" type="text" required>
+            </div>
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="password">Şifre</label>
+                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" id="password" name="password" type="password" required>
+            </div>
+            <div class="flex items-center justify-between">
+                <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full" type="submit">
+                    Giriş Yap
+                </button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
+"""
+
+@router.get("/login", response_class=HTMLResponse)
+async def login_page():
+    return HTMLResponse(content=LOGIN_HTML)
+
+@router.post("/login")
+async def login(response: Response, username: str = Form(...), password: str = Form(...), db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User).where(User.username == username))
+    user = result.scalars().first()
+    
+    # Hata durumunda (yanlış şifre vb.)
+    if not user or not auth_service.verify_password(password, user.hashed_password):
+        return HTMLResponse(content="<script>alert('Hatalı kullanıcı adı veya şifre!'); window.location.href='/api/v1/admin/login';</script>", status_code=401)
+    
+    # Token oluştur ve Cookie'ye yerleştir (Aynı Alan adı güvenliği)
+    access_token = auth_service.create_access_token(data={"sub": user.username, "role": user.role})
+    response = RedirectResponse(url="/api/v1/admin/", status_code=status.HTTP_302_FOUND)
+    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True, max_age=86400, samesite="lax")
+    return response
+
+@router.get("/logout")
+async def logout(response: Response):
+    response = RedirectResponse(url="/api/v1/admin/login", status_code=status.HTTP_302_FOUND)
+    response.delete_cookie("access_token")
+    return response
+
 @router.get("/", response_class=HTMLResponse)
-async def admin_dashboard():
-    return HTMLResponse(content=ADMIN_HTML)
+async def admin_dashboard(request: Request):
+    try:
+        get_current_user(request)
+        return HTMLResponse(content=ADMIN_HTML)
+    except HTTPException:
+        return RedirectResponse(url="/api/v1/admin/login")
 
 @router.get("/orders")
-async def get_orders(db: AsyncSession = Depends(get_db)):
+async def get_orders(current_user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     service = OrderService(db)
     return await service.get_orders()
 
 @router.put("/orders/{order_id}/status")
-async def update_order_status(order_id: int, status: OrderStatus, db: AsyncSession = Depends(get_db)):
+async def update_order_status(order_id: int, status: OrderStatus, current_user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     service = OrderService(db)
     updated_order = await service.update_status(order_id, status)
     if not updated_order:

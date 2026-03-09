@@ -5,9 +5,8 @@ from app.db.database import init_db
 
 app = FastAPI(title="ModaMasal AI Backend")
 
-@app.on_event("startup")
-async def on_startup():
-    await init_db()
+# init_db is handled manually via seed_db.py now
+# startup hook removed to prevent WSGI deadlocks
 
 app.include_router(api_router, prefix="/api/v1")
 app.include_router(admin.router, prefix="/api/v1/admin", tags=["admin"])

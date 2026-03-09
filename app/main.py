@@ -8,23 +8,7 @@ app = FastAPI(title="ModaMasal AI Backend")
 @app.on_event("startup")
 async def on_startup():
     await init_db()
-    
-    # Otomatik Admin Kurulum Kontrolü (Production için)
-    from app.db.models import User
-    from app.services.auth_service import AuthService
-    from app.db.database import SessionLocal
-    from sqlalchemy.future import select
-    
-    async with SessionLocal() as db:
-        result = await db.execute(select(User).filter(User.username == "admin"))
-        admin_user = result.scalars().first()
-        if not admin_user:
-            auth = AuthService()
-            hashed_pw = auth.get_password_hash("admin")
-            new_admin = User(username="admin", hashed_password=hashed_pw)
-            db.add(new_admin)
-            await db.commit()
-            print("===> Production Ready: Ilk kurulus saglandi, varsayilan admin (admin:admin) eklendi.")
+
 app.include_router(api_router, prefix="/api/v1")
 app.include_router(admin.router, prefix="/api/v1/admin", tags=["admin"])
 app.include_router(webhooks.router, prefix="/api/v1", tags=["webhooks"])

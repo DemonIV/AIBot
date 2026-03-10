@@ -7,7 +7,6 @@ python-dotenv
 google-generativeai
 sqlalchemy
 alembic
-aiosqlite
 asyncpg
 psycopg2-binary
 bcrypt

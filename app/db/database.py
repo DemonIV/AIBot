@@ -8,15 +8,17 @@ from sqlalchemy.orm import declarative_base
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 load_dotenv(os.path.join(BASE_DIR, '.env'))
 
-# 2. SADECE MySQL! PostgreSQL ve SQLite tamamen yasaklandi.
+# 2. SADECE PostgreSQL! SQLite veya MySQL tamamen yasaklandi.
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
-    raise ValueError("KRITIK HATA: DATABASE_URL ayarlari bulunamadi. Proje sadece MySQL ile calismaya ayarlidir!")
+    raise ValueError("KRITIK HATA: DATABASE_URL ayarlari bulunamadi. Proje sadece PostgreSQL ile calismaya ayarlidir!")
 
 DATABASE_URL = DATABASE_URL.strip()
-if DATABASE_URL.startswith("mysql://"):
-    DATABASE_URL = DATABASE_URL.replace("mysql://", "mysql+aiomysql://", 1)
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
+elif DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
 
 print(f"PRODUCTION DB URL: {DATABASE_URL.split('://')[0]}")
 

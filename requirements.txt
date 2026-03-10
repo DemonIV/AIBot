@@ -8,8 +8,8 @@ google-generativeai
 sqlalchemy
 alembic
 aiosqlite
-asyncpg
-psycopg2-binary
+aiomysql
+cryptography
 bcrypt
 PyJWT
 python-multipart

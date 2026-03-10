@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, Enum, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, Enum, ForeignKey, Float, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
@@ -46,6 +46,25 @@ class Store(Base):
     owner = relationship("User", back_populates="stores")
     # Mağazaya ait Siparişler
     orders = relationship("Order", back_populates="store")
+    # Mağazaya ait Ürünler
+    products = relationship("Product", back_populates="store")
+    # Müşteri Etkileşimleri
+    interactions = relationship("CustomerInteraction", back_populates="store")
+
+class Product(Base):
+    __tablename__ = "products"
+
+    id = Column(Integer, primary_key=True, index=True)
+    store_id = Column(Integer, ForeignKey("stores.id"), nullable=True)
+    store = relationship("Store", back_populates="products")
+    
+    name = Column(String, index=True, nullable=False)
+    sku = Column(String, unique=True, index=True, nullable=True)
+    description = Column(Text, nullable=True)
+    price = Column(Float, nullable=False)
+    stock = Column(Integer, default=0)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 class Order(Base):
     __tablename__ = "orders"
@@ -77,3 +96,29 @@ class Order(Base):
     payment_method = Column(Enum(PaymentMethod), default=PaymentMethod.CREDIT_CARD)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # İade Talebi ile İlişki
+    return_request = relationship("ReturnRequest", back_populates="order", uselist=False)
+
+class ReturnRequest(Base):
+    __tablename__ = "return_requests"
+
+    id = Column(Integer, primary_key=True, index=True)
+    order_id = Column(Integer, ForeignKey("orders.id"), unique=True)
+    order = relationship("Order", back_populates="return_request")
+    
+    reason = Column(Text, nullable=False)
+    status = Column(String, default="İnceleniyor") # İnceleniyor, Onaylandı, Reddedildi
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class CustomerInteraction(Base):
+    __tablename__ = "customer_interactions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    store_id = Column(Integer, ForeignKey("stores.id"), nullable=True)
+    store = relationship("Store", back_populates="interactions")
+    
+    sender_id = Column(String, index=True, nullable=False) # WhatsApp phone number or IG platform ID
+    platform = Column(String, nullable=False) # "WhatsApp" veya "Instagram"
+    message_count = Column(Integer, default=1)
+    last_interaction = Column(DateTime, default=datetime.utcnow)

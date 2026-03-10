@@ -5,8 +5,12 @@ from app.db.database import init_db
 
 app = FastAPI(title="ModaMasal AI Backend")
 
-# init_db is handled manually via seed_db.py now
-# startup hook removed to prevent WSGI deadlocks
+@app.on_event("startup")
+async def on_startup():
+    import asyncio
+    from app.db.database import init_db
+    # Arkaplanda calistirarak Namecheap'te kilitlenmeleri (runaway process) sifira indirir
+    asyncio.create_task(init_db())
 
 app.include_router(api_router, prefix="/api/v1")
 app.include_router(admin.router, prefix="/api/v1/admin", tags=["admin"])
